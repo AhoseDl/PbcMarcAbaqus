@@ -1,5 +1,7 @@
 #!/bin/bash
+
 export LC_ALL=C
+
 # Pour Importer les noeuds du fichier .dat
 #filename='pbc.dat'
 #condfichier=$(echo "" |bc -l)
@@ -46,17 +48,16 @@ Ymax=$(sort -gr +2 coordinates.txt | awk 'NR==1{print $3}')
 Zmin=$(sort -g +3 coordinates.txt | awk 'NR==1{print $4}')
 #Zmax=$(sort -g +3 coordinates.txt | awk -v Sup=$CoordLine 'NR==Sup{print $4}')
 Zmax=$(sort -gr +3 coordinates.txt | awk 'NR==1{print $4}')
-
-#:<<'end'
+:<<'end'
 Xmin="-0.5"
 Xmax="0.5"
 Ymin="-0.5"
 Ymax="0.5"
 Zmin="-0.5"
 Zmax="0.5"
-#end
+end
                                  
- #-------------------------------------------------------  Construction des conditions de bord symétriques  --- ------------------------------------------------------------                                
+ #-------------------------------------------------------   Construction des conditions de bord symétriques  --- ------------------------------------------------------------                                
 : <<'end'                                                                   
                                                                             Z-
                                              D'               C'             -                          
@@ -71,7 +72,8 @@ Zmax="0.5"
                                          - -           -  -   
                                          ---------------                                     
                                        A                B
-                                       
+                                       Transform QML Type
+
 Retained nodes : A, B, D, A'
 A(Xmin, Ymin, Zmin), B (Xmax, Ymin, Zmin), C(Xmax, Ymax, Zmin), D(Xmin, Ymax, Zmin), A'(Xmin, Ymin, Zmax), B'(Xmax, Ymin, Zmax), C'(Xmax, Ymax, Zmax), D'(Xmin, Ymax, Zmax)                                
 end
@@ -107,7 +109,6 @@ fi
 #echo "servo link, $NbLinks, 0, 1" > servolink.txt
 
 # Corner nodes links
-
 :<<'end'
 awk -v Xmin=$Xmin -v Ymin=$Ymin -v Zmin=$Zmin '($2==Xmin && $3==Ymin && $4==Zmin){print $0}' coordinates.txt > corners.txt #Point A
 awk -v Xmax=$Xmax -v Ymin=$Ymin -v Zmin=$Zmin '($2==Xmax && $3==Ymin && $4==Zmin){print $0}' coordinates.txt >> corners.txt #Point B
@@ -244,6 +245,9 @@ awk -v nA=$nA -v nB=$nB -v nC=$nC -v nD=$nD -v nAp=$nAp -v nBp=$nBp -v nCp=$nCp 
 #NotNodesString="$1!=$nA && $1!=$nB && $1!=$nC && $1!=$nD && $1!=$nAp && $1!=$nBp && $1!=$nCp && $1!=$nDp"
 #StringAwk="$NodesString "'-v Zmin=$Zmin -v Xmin=$Xmin''$2==Xmin && $4==Zmin{print $1, $2, $3, $4}' 
 
+epsi="0"
+#epsi="0"
+
 CorrespondanceX(){
 file1="$1"
 file2="$2"
@@ -264,13 +268,22 @@ do
                 az=$(echo "$a"|awk '{print $4}')
                 bx=$(echo "$b"|awk '{print $2}')
                 bz=$(echo "$b"|awk '{print $4}')
-                #condx=$(echo "($ax==$bx)&&($az==$bz)" |bc -l)
-                condx1=$(echo "($ax==$bx)" |bc -l)
+                #condx1=$(echo "($ax==$bx)" |bc -l)
+                #condx1=$(awk -v ax=$ax -v bx=$bx -v epsi=$epsi 'BEGIN{print ((ax-bx)<=epsi || (bx-ax)<=epsi )}')
+                
+                axbx=$(awk -v ax=$ax -v bx=$bx 'BEGIN{print (ax-bx)}')
+                axbx=$(echo -e "$axbx" |sed -e s/^-//g )
+                condx1=$(awk -v axbx=$axbx -v epsi=$epsi 'BEGIN{print ((axbx)<=epsi ) }')
+                
    		 if (( $condx1 ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
                 rt1=$(echo "$b"| awk '{print $1}')
-                condx2=$(echo "($az==$bz)" |bc -l)
+                #condx2=$(echo "($az==$bz)" |bc -l)
+                #condx2=$(awk -v az=$az -v bz=$bz -v epsi=$epsi 'BEGIN{print ((az-bz)<=epsi || (bz-az)<=epsi )}')            
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                condx2=$(awk -v azbz=$azbz -v epsi=$epsi 'BEGIN{print ((azbz)<=epsi ) }')    
                 	if (( $condx2 ));
                 	then
                 	rt2="$nD"
@@ -310,13 +323,22 @@ do
                 az=$(echo "$a"|awk '{print $4}')
                 by=$(echo "$b"|awk '{print $3}')
                 bz=$(echo "$b"|awk '{print $4}')
-                #condy=$(echo "($ay==$by)&&($az==$bz)" |bc -l)
-                condy1=$(echo "($ay==$by)" |bc -l)
+                #condy1=$(echo "($ay==$by)" |bc -l)
+                #condy1=$(awk -v ay=$ay -v by=$by -v epsi=$epsi 'BEGIN{print ((ay-by)<=epsi || (by-ay)<=epsi )}')
+                              
+                ayby=$(awk -v ay=$ay -v by=$by 'BEGIN{print (ay-by)}')
+                ayby=$(echo -e "$ayby" |sed -e s/^-//g )
+                condy1=$(awk -v ayby=$ayby -v epsi=$epsi 'BEGIN{print ((ayby)<=epsi ) }')   
+                         
                 if (( $condy1 ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
                 rt1=$(echo "$b"| awk '{print $1}')
-                condy2=$(echo "($az==$bz)" |bc -l)
+                #condy2=$(echo "($az==$bz)" |bc -l)
+                #condy2=$(awk -v az=$az -v bz=$bz -v epsi=$epsi 'BEGIN{print ((az-bz)<=epsi || (bz-az)<=epsi )}')               
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                condy2=$(awk -v azbz=$azbz -v epsi=$epsi 'BEGIN{print ((azbz)<=epsi ) }')              
                 if (( $condy2 ));
                 then
                 rt2="$nB"
@@ -354,13 +376,22 @@ do
                 az=$(echo "$a"|awk '{print $4}')
                 by=$(echo "$b"|awk '{print $3}')
                 bz=$(echo "$b"|awk '{print $4}')
-                #condz=$(echo "($ay==$by)&&($az==$bz)" |bc -l)
-                condz1=$(echo "($az==$bz)" |bc -l)
+                #condz1=$(echo "($az==$bz)" |bc -l)
+                #condz1=$(awk -v az=$az -v bz=$bz -v epsi=$epsi 'BEGIN{print ((az-bz)<=epsi || (bz-az)<=epsi )}')     
+                          
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                condz1=$(awk -v azbz=$azbz -v epsi=$epsi 'BEGIN{print ((azbz)<=epsi ) }')
+                
                 if (( $condz1 ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
                 rt1=$(echo "$b"| awk '{print $1}')
-                condz2=$(echo "($ay==$by)" |bc -l)
+                #condz2=$(echo "($ay==$by)" |bc -l)
+                #condz2=$(awk -v ay=$ay -v by=$by -v epsi=$epsi 'BEGIN{print ((ay-by)<=epsi || (by-ay)<=epsi )}')                
+                ayby=$(awk -v ay=$ay -v by=$by 'BEGIN{print (ay-by)}')
+                ayby=$(echo -e "$ayby" |sed -e s/^-//g )
+                condz2=$(awk -v ayby=$ayby -v epsi=$epsi 'BEGIN{print ((ayby)<=epsi ) }')                                   
                 if (( $condz2 ));
                 then
                 rt2="$nB"
@@ -389,6 +420,7 @@ cat "$file2" > $file2Temoin
 for ((ii=1; ii<=size1; ii++, size2--))
 do
         for ((jj=1; jj<=size2 ; jj++))
+
         do
                 a=$(awk -v ii=$ii 'NR==ii{print $0}' $file1)
                 b=$(awk -v jj=$jj 'NR==jj{print $0}' $file2Temoin)
@@ -398,7 +430,17 @@ do
                 az=$(echo "$a"|awk '{print $4}')
                 by=$(echo "$b"|awk '{print $3}')
                 bz=$(echo "$b"|awk '{print $4}')
-                condx=$(echo "($ay==$by)&&($az==$bz)" |bc -l)
+                #condx=$(echo "($ay==$by)&&($az==$bz)" |bc -l)
+                #condx=$(awk -v ay=$ay -v by=$by -v az=$az -v bz=$bz -v epsi=$epsi 'BEGIN{print (((ay-by)<=epsi || (by-ay)<=epsi ) && ((az-bz)<=epsi || (bz-az)<=epsi ))}')
+                
+                ayby=$(awk -v ay=$ay -v by=$by 'BEGIN{print (ay-by)}')
+                ayby=$(echo -e "$ayby" |sed -e s/^-//g )
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                
+                
+                condx=$(awk -v ayby=$ayby -v azbz=$azbz -v epsi=$epsi 'BEGIN{print ( (ayby)<=epsi && (azbz)<=epsi ) }')   
+                
                 if (( $condx ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
@@ -436,7 +478,16 @@ do
                 az=$(echo "$a"|awk '{print $4}')
                 bx=$(echo "$b"|awk '{print $2}')
                 bz=$(echo "$b"|awk '{print $4}')
-                condy=$(echo "($ax==$bx)&&($az==$bz)" |bc -l)
+                #condy=$(echo "($ax==$bx)&&($az==$bz)" |bc -l)
+                #condy=$(awk -v ax=$ax -v bx=$bx -v az=$az -v bz=$bz -v epsi=$epsi 'BEGIN{print (((ax-bx)<=epsi || (bx-ax)<=epsi ) && ((az-bz)<=epsi || (bz-az)<=epsi ))}')
+                
+                axbx=$(awk -v ax=$ax -v bx=$bx 'BEGIN{print (ax-bx)}')
+                axbx=$(echo -e "$axbx" |sed -e s/^-//g )
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                
+                condy=$(awk -v axbx=$axbx -v azbz=$azbz -v epsi=$epsi 'BEGIN{print ( (axbx)<=epsi && (azbz)<=epsi ) }')
+                         
                 if (( $condy ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
@@ -472,7 +523,16 @@ do
                 ay=$(echo "$a"|awk '{print $3}')
                 bx=$(echo "$b"|awk '{print $2}')
                 by=$(echo "$b"|awk '{print $3}')
-                condz=$(echo "($ax==$bx)&&($ay==$by)" |bc -l)
+                #condz=$(echo "($ax==$bx)&&($ay==$by)" |bc -l)
+                #condz=$(awk -v ax=$ax -v bx=$bx -v ay=$ay -v by=$by -v epsi=$epsi 'BEGIN{print (((ax-bx)<=epsi || (bx-ax)<=epsi ) && ((ay-by)<=epsi || (by-ay)<=epsi ))}')
+                
+                axbx=$(awk -v ax=$ax -v bx=$bx 'BEGIN{print (ax-bx)}')
+                axbx=$(echo -e "$axbx" |sed -e s/^-//g )
+                azbz=$(awk -v az=$az -v bz=$bz 'BEGIN{print (az-bz)}')
+                azbz=$(echo -e "$azbz" |sed -e s/^-//g )
+                
+                condz=$(awk -v axbx=$axbx -v ayby=$ayby -v epsi=$epsi 'BEGIN{print ( (axbx)<=epsi && (ayby)<=epsi ) }')
+                          
                 if (( $condz ));
                 then
                 tn=$(echo "$a"| awk '{print $1}')
@@ -551,19 +611,19 @@ echo "Nombre de noeuds sur les segments de bords : $EdgeNumberX $EdgeNumberY $Ed
 #echo $XminDonnees, $XmaxDonnees, $YminDonnees, $YmaxDonnees, $ZminDonnees, $ZmaxDonnees
 #echo $EdgeNumberX, $EdgeNumberY, $EdgeNumberZ
 
-#Rotaion x-axis
+#Rotaion x-axis (edge notes in x direction)
 dos2unix YminZmin.txt YmaxZmin.txt YminZmax.txt YmaxZmax.txt YminZmin.txt YminZmax.txt 2>/dev/null
 CorrespondanceX YmaxZmin.txt YminZmin.txt>>connectivity.txt
 CorrespondanceX YmaxZmax.txt YminZmax.txt>>connectivity.txt
 CorrespondanceX YminZmax.txt YminZmin.txt>>connectivity.txt
 
-#Rotation y-axix
+#Rotation y-axix (edge notes in y direction)
 dos2unix XminZmin.txt XmaxZmin.txt XmaxZmax.txt XminZmax.txt 2>/dev/null
 CorrespondanceY XmaxZmin.txt XminZmin.txt>>connectivity.txt
 CorrespondanceY XmaxZmax.txt XminZmax.txt>>connectivity.txt
 CorrespondanceY XminZmax.txt XminZmin.txt>>connectivity.txt     
 
-#Rotation z-axix
+#Rotation z-axix (edge notes in x direction)
 dos2unix XminYmin.txt XmaxYmin.txt XmaxYmax.txt XminYmax.txt 2>/dev/null
 CorrespondanceZ XmaxYmin.txt XminYmin.txt>>connectivity.txt
 CorrespondanceZ XmaxYmax.txt XminYmax.txt>>connectivity.txt
@@ -572,9 +632,9 @@ CorrespondanceZ XminYmax.txt XminYmin.txt>>connectivity.txt
 
 # Noeuds internes faces X
 dos2unix XminF.txt XmaxF.txt 2>/dev/null
-CorrespondanceXF XmaxF.txt XminF.txt>bam.txt
+CorrespondanceXF XmaxF.txt XminF.txt >> connectivity.txt
 #CorrespondanceXF XmaxF.txt XminF.txt >>connectivity.txt
-cat bam.txt >> connectivity.txt
+#cat bam.txt >> connectivity.txt
 
 
 # Noeuds internes faces Y
@@ -617,6 +677,8 @@ cat servolink.txt >>"${filename%.dat}pbc.dat"
 awk -v Sup=$Sup 'NR>Sup{print $0}' $filename>>"${filename%.dat}pbc.dat"
 echo -e "Fichier de calcul Marc MSC avec les conditions de bords périodiques : \e[0;32m${filename%.dat}pbc.dat\e[0;m"          
 echo -e "(Voir dans `pwd`)"
-rm coordinates.txt  connectivity.txt
+#rm coordinates.txt  connectivity.txt
 rm XmaxF.txt XmaxYmax.txt XmaxYmin.txt XmaxZmax.txt XmaxZmin.txt XminF.txt XminYmax.txt XminYmin.txt XminZmax.txt XminZmin.txt YmaxF.txt YmaxZmax.txt YmaxZmin.txt YminF.txt YminZmax.txt YminZmin.txt ZmaxF.txt ZminF.txt
-rm CoordinatesSansCoins.txt corners.txt motif.txt servolink.txt col1.txt col2.txt col3.txt col4.txt coordinates1.txt coordinatesTemp.txt
+rm CoordinatesSansCoins.txt motif.txt servolink.txt col1.txt col2.txt col3.txt col4.txt coordinates1.txt coordinatesTemp.txt
+
+#rm corners.txt 
