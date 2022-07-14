@@ -778,5 +778,10 @@ pbcSortieCisXZ.close();
 pbcSortieCisYZ.close();
 InputFile.close();
 
+ofstream BDAp("NodesBDAp.dat", ios::out);
+BDAp<<vectB[0]<<" "<<vectD[0]<<" "<<vectAp[0];
+
+BDAp.close();
+
 	return 0;
 }

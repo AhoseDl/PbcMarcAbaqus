@@ -1,3 +1,5 @@
 pbc3D.cc génère un fichier dans lequel les données du fichier d'entrée sont conservées et dans lequel les servolink sont ajoutés après les coordinates
 
 pbc3DStatique.cc génère les fichiers pbcTractionX, pbcTractionY, pbcTractionZ, pbcTractionXY, pbcTractionXZ, pbcTractionYZ utilisés pour calculer les éléments de la matrice de rigidité.
+
+pbc3D.sh est la version shell du code
